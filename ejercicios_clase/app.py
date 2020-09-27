@@ -70,8 +70,9 @@ def index():
         result += "<h3>[POST] /personas --> enviar el JSON para completar la tabla</h3>"
         result += "<h3>[GET] /registro --> mostrar el HTML con el formulario de registro de persona</h3>"
         result += "<h3>[POST] /registro --> ingresar nuevo registro de pulsaciones por JSON</h3>"
-        result += "<h3>[GET] /comparativa --> mostrar un gráfico que compare cuantas personas hay de cada nacionalidad"
-        
+        result += "<h3>[GET] /comparativa --> mostrar tabla con datos para gráfico"
+        result += "<h3>[GET] /comparativa/gráfico --> mostrar un gráfico que compare cuantas personas hay de cada nacionalidad"
+
         return(result)
     except:
         return jsonify({'trace': traceback.format_exc()})
@@ -95,6 +96,7 @@ def personas():
         result = '''<h3>Alumno: Implementar la llamada
                     al HTML tabla.html
                     con render_template</h3>'''
+        result = render_template('tabla.html')
         return result
     except:
         return jsonify({'trace': traceback.format_exc()})
@@ -117,7 +119,60 @@ def comparativa():
                     nationality_review</h3>'''
         result += '''<h3>Esa funcion debe devolver los datos que necesite
                     para implementar el grafico a mostrar</h3>'''
+       
+       # Tabla HTML, header y formato
+        result += '<table border="1">'
+        result += '<thead cellpadding="1.0" cellspacing="1.0">'
+        result += '<tr>'
+        result += '<th>Nombre</th>'
+        result += '<th>Edad</th>'
+        result += '<th>Nacionalidad</th>'
+        result += '</tr>'
+        
+        data = persona.report()
+        print(data)
+
+        # return (result)
+
+        for row in data:
+        
+            # Fila de una tabla HTML
+            result += '<tr>'
+            result += '<td>' + str(row['name']) + '</td>'
+            result += '<td>' + str(row['age']) + '</td>'
+            result += '<td>' + str(row['nationality']) + '</td>'
+            result += '</tr>'
+
+        # Fin de la tabla HTML
+        result += '</thead cellpadding="0" cellspacing="0" >'
+        result += '</table>'
+
         return (result)
+              
+    except:
+        return jsonify({'trace': traceback.format_exc()})
+
+
+@app.route("/comparativa/grafico")
+def grafico():
+    
+    data = persona.report()
+    print(data)
+    nac_nombre, nac_cant = persona.graphics_factory(data)
+
+    try:  
+        # confección de gráfico
+        fig = plt.figure()
+        fig.suptitle('Nacionalidades', fontsize=16)
+        ax = fig.add_subplot()
+        ax.bar(nac_nombre, nac_cant, label='Nacionalidad')
+        ax.legend()
+        # plt.show()
+        
+        # convertir gráfico en imagen
+        output = io.BytesIO()
+        FigureCanvas(fig).print_png(output)
+        return Response(output.getvalue(), mimetype='image/png')
     except:
         return jsonify({'trace': traceback.format_exc()})
 
@@ -129,15 +184,16 @@ def registro():
             return render_template('registro.html')
         except:
             return jsonify({'trace': traceback.format_exc()})
-
+    
     if request.method == 'POST':
         try:
             # Alumno: Implemente
             # Obtener del HTTP POST JSON el nombre y los pulsos
-            # name = ...
-            # age = ...
-            # nationality = ...
-            # persona.insert(name, int(age), nationality)
+                        
+            name = str(request.json['name'])
+            age = str(request.json['age'])
+            nationality = str(request.json['nationality'])
+            persona.insert(name, int(age), nationality)
             return Response(status=200)
         except:
             return jsonify({'trace': traceback.format_exc()})

@@ -15,6 +15,7 @@ __version__ = "1.1"
 
 import os
 import sqlite3
+import collections
 
 db = {}
 
@@ -87,3 +88,22 @@ def report(limit=0, offset=0):
     # Cerrar la conexión con la base de datos
     conn.close()
     return query_results
+
+def graphics_factory(data):
+    '''
+    Crear lista para gráfico a partir de data
+    '''
+    # clasificar por nacionalidad
+    nacionalidad = [registro['nationality'] for registro in data]
+    nacionalidad = collections.Counter(nacionalidad)
+
+    # formar listas para graficar
+    nac_nombre = []
+    nac_cant = []
+
+    for k, v in nacionalidad.items():
+        nac_nombre.append(k)
+        nac_cant.append(v)
+
+    return nac_nombre, nac_cant
+
